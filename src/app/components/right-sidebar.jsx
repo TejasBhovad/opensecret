@@ -169,8 +169,8 @@ const RightSidebar = () => {
                   className="h-10 w-10 rounded-full"
                 />
                 <div>
-                  <p className="font-semibold">{user.name}</p>
-                  <p className="text-sm text-foreground/50">@{user.username}</p>
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-foreground/50">@{user.username}</p>
                 </div>
               </div>
               <button
@@ -215,7 +215,7 @@ const RightSidebar = () => {
                   className="h-10 w-10 rounded-full"
                 />
                 <div>
-                  <p className="font-semibold">{pod.name}</p>
+                  <p className="text-sm font-medium">{pod.name}</p>
                   <p className="text-sm text-foreground/50">
                     {pod.followers} followers
                   </p>

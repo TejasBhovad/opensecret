@@ -1,3 +1,5 @@
+"use client";
+
 import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 import { Package, BookHeart, TimerReset } from "lucide-react";
@@ -11,6 +13,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const items = [
   {
@@ -41,17 +45,77 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Fallback UI while theme is undefined
+  if (!mounted) {
+    return (
+      <Sidebar className="bg-gray-900 text-white min-h-screen">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem
+                    key={item.title}
+                    className="rounded-lg hover:bg-gray-700"
+                  >
+                    <SidebarMenuButton asChild>
+                      <a
+                        href={item.url}
+                        className="flex items-center gap-3 p-2 w-full"
+                      >
+                        <item.icon className="w-5 h-5 text-white" />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <div className="px-2 py-2">
+          <ModeToggle />
+        </div>
+      </Sidebar>
+    );
+  }
+
   return (
-    <Sidebar>
+    <Sidebar
+      className={`${
+        theme === "dark" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+      } min-h-screen`}
+    >
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem
+                  key={item.title}
+                  className={`rounded-lg transition-all duration-200 ${
+                    theme === "dark"
+                      ? "hover:bg-gray-700"
+                      : "hover:bg-gray-300 text-gray-900"
+                  }`}
+                >
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
+                    <a
+                      href={item.url}
+                      className="flex items-center gap-3 p-2 w-full"
+                    >
+                      <item.icon
+                        className={`w-5 h-5 ${
+                          theme === "dark" ? "text-white" : "text-gray-900"
+                        }`}
+                      />
                       <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
