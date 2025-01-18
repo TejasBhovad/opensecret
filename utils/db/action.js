@@ -1,4 +1,5 @@
-import { and, eq, like, or, sql } from "drizzle-orm";
+"use server";
+import { and, eq, like, or, sql, desc } from "drizzle-orm";
 import { db } from "./dbconfig";
 import {
   bookmarks,
@@ -518,6 +519,19 @@ export async function getAllHashtags() {
   }
 }
 
+export async function getPods() {
+  try {
+    const results = await db
+      .select()
+      .from(pods)
+      .where(eq(pods.is_public, true));
+    return results;
+  } catch (error) {
+    console.error("Get pods error:", error);
+    throw error;
+  }
+}
+
 // Get Pod Stories
 export async function getPodStories(pod_id) {
   try {
@@ -649,6 +663,7 @@ export async function getSuggestedPods(user_id) {
 
 // get suggested users
 export async function getSuggestedUsers(user_id) {
+  console.log("user_id", user_id);
   try {
     const user = await getUserById(user_id);
     if (!user) {
@@ -672,6 +687,23 @@ export async function getSuggestedUsers(user_id) {
     return results;
   } catch (error) {
     console.error("Get suggested users error:", error);
+    throw error;
+  }
+}
+
+export async function getPopularStories() {
+  try {
+    const results = await db
+      .select()
+      .from(stories)
+      .orderBy(stories.likes_count, desc)
+      .limit(5);
+    if (!results) {
+      throw new Error("No popular stories found");
+    }
+    return results;
+  } catch (error) {
+    console.error("Get popular stories error:");
     throw error;
   }
 }
