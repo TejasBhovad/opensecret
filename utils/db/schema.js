@@ -16,21 +16,14 @@ import {
 // Users Table
 export const users = pgTable("users", {
   user_id: serial("user_id").primaryKey(),
-  number: varchar("number", { length: 20 }).unique(),
-  gmail: varchar("gmail", { length: 100 }).unique(),
-  passwordHash: varchar("password_hash", { length: 255 }),
-
+  email: varchar("gmail", { length: 100 }).unique(),
+  name: varchar("name", { length: 50 }),
   pod_follow: integer("pod_follow").default(0),
   user_following: integer("user_following").default(0),
   followers: integer("followers").default(0),
-
-  // Additional user metadata
-  profile_picture: varchar("profile_picture", { length: 255 }),
-  bio: text("bio"),
-  location: varchar("location", { length: 100 }),
+  onboarded: boolean("onboarded").default(false),
+  profile: varchar("profile_picture", { length: 255 }),
   joined_at: timestamp("joined_at").defaultNow(),
-  last_active: timestamp("last_active"),
-  account_type: varchar("account_type", { length: 50 }).default("standard"),
 });
 
 // Pods Table
@@ -40,8 +33,6 @@ export const pods = pgTable("pods", {
   is_public: boolean("is_public").default(true),
   subtag: varchar("subtag", { length: 50 }),
   domain: varchar("domain", { length: 100 }),
-
-  // Additional pod metadata
   description: text("description"),
   created_at: timestamp("created_at").defaultNow(),
   total_stories: integer("total_stories").default(0),
@@ -49,21 +40,21 @@ export const pods = pgTable("pods", {
   popularity_score: decimal("popularity_score").default(0),
 });
 
-// Blocked Relationships Table
-export const blockedRelationships = pgTable(
-  "blocked_relationships",
-  {
-    id: serial("id").primaryKey(), // Added serial primary key
-    user_id: integer("user_id").references(() => users.user_id),
-    pod_id: integer("pod_id").references(() => pods.pod_id),
-  },
-  (table) => ({
-    uniqueIdx: uniqueIndex("blocked_relationships_unique_idx").on(
-      table.user_id,
-      table.pod_id,
-    ),
-  }),
-);
+// // Blocked Relationships Table
+// export const blockedRelationships = pgTable(
+//   "blocked_relationships",
+//   {
+//     id: serial("id").primaryKey(), // Added serial primary key
+//     user_id: integer("user_id").references(() => users.user_id),
+//     pod_id: integer("pod_id").references(() => pods.pod_id),
+//   },
+//   (table) => ({
+//     uniqueIdx: uniqueIndex("blocked_relationships_unique_idx").on(
+//       table.user_id,
+//       table.pod_id,
+//     ),
+//   }),
+// );
 
 // Archived Pods Table
 export const archivedPods = pgTable(
@@ -99,11 +90,10 @@ export const bookmarks = pgTable(
   }),
 );
 
-// Pod Creators Table
 export const podCreators = pgTable(
   "pod_creators",
   {
-    id: serial("id").primaryKey(), // Added serial primary key
+    id: serial("id").primaryKey(),
     user_id: integer("user_id").references(() => users.user_id),
     pod_id: integer("pod_id").references(() => pods.pod_id),
     joined_at: timestamp("joined_at").defaultNow(),
