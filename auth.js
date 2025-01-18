@@ -13,11 +13,11 @@ export const {
 } = NextAuth({
   providers: [Google],
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ users }) {
       try {
-        console.log("USER", user);
+        console.log("USER", users);
         // Attempt to get the user by email
-        const existingUser = await getUserByEmail(user.email);
+        const existingUser = await getUserByEmail(users.email);
         console.log("existingUser", existingUser);
         if (
           existingUser === undefined ||
@@ -26,7 +26,7 @@ export const {
           existingUser.length === 0
         ) {
           console.log("User does not exist, adding user");
-          await createUser(user.email, user.name, user.image);
+          await createUser(users.email, users.name, users.image);
         }
         // Return true to continue the sign-in process
         return true;
