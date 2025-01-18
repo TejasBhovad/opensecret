@@ -1,49 +1,51 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-
+import { useUser } from "@/hooks/user";
+import {
+  getSuggestedPods,
+  getSuggestedUsers,
+  getAllHashtags,
+} from "../../../utils/db/action";
 const RightSidebar = () => {
-  const hashtags = [
-    "nature",
-    "photography",
-    "travel",
-    "art",
-    "love",
-    "photooftheday",
-    "instagood",
-    "beautiful",
-    "fashion",
-    "picoftheday",
-    "happy",
-    "cute",
-    "summer",
-    "me",
-    "friends",
-    "selfie",
-  ];
+  const { user, loading, error } = useUser();
+  const [hashtags, setHashtags] = useState([]);
+  const [loadingHashtags, setLoadingHashtags] = useState(true);
+  const [errorHashtags, setErrorHashtags] = useState(null);
+  useEffect(() => {
+    const fetchHashtags = async () => {
+      try {
+        setLoadingHashtags(true);
+        const fetchedHashtags = await getAllHashtags();
+        setHashtags(fetchedHashtags);
+      } catch (err) {
+        setErrorHashtags(err.message);
+      } finally {
+        setLoadingHashtags(false);
+      }
+    };
+    fetchHashtags();
+  }, []);
 
-  const users = [
-    {
-      username: "johndoe",
-      name: "John Doe",
-      profilePic: "https://randomuser.me/api/portraits/lego/0.jpg",
-    },
-    {
-      username: "janedoe",
-      name: "Jane Doe",
-      profilePic: "https://randomuser.me/api/portraits/lego/1.jpg",
-    },
-    {
-      username: "johndoe2",
-      name: "John Doe",
-      profilePic: "https://randomuser.me/api/portraits/lego/2.jpg",
-    },
-    {
-      username: "janedoe2",
-      name: "Jane Doe",
-      profilePic: "https://randomuser.me/api/portraits/lego/3.jpg",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [errorUsers, setErrorUsers] = useState(null);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        console.log(user);
+        const fetchedUsers = await getSuggestedUsers(user.user_id);
+        console.log(fetchedUsers);
+        setUsers(fetchedUsers);
+      } catch (err) {
+        setErrorUsers(err.message);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
+  }, [user]);
 
   const pods = [
     {
@@ -116,6 +118,7 @@ const RightSidebar = () => {
   return (
     <div className="h-full w-full space-y-6 p-4">
       {/* Trending Tags Section */}
+      {JSON.stringify(user)}
       <motion.div
         className="space-y-2"
         initial="hidden"
@@ -155,37 +158,7 @@ const RightSidebar = () => {
         <motion.h3 className="mb-3 text-lg font-semibold">
           Suggested Users
         </motion.h3>
-        <motion.div className="space-y-3">
-          {randomUsers.map((user) => (
-            <motion.div
-              key={user.username}
-              className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-secondary/10"
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src={user.profilePic}
-                  alt={user.username}
-                  className="h-10 w-10 rounded-full"
-                />
-                <div>
-                  <p className="text-sm font-medium">{user.name}</p>
-                  <p className="text-xs text-foreground/50">@{user.username}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => toggleFollowUser(user.username)}
-                className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
-                  followedUsers.has(user.username)
-                    ? "bg-primary/20 text-background"
-                    : "bg-primary text-background hover:bg-primary/90"
-                }`}
-              >
-                {followedUsers.has(user.username) ? "Following" : "Follow"}
-              </button>
-            </motion.div>
-          ))}
-        </motion.div>
+        <motion.div className="space-y-3">{JSON.stringify(users)}</motion.div>
       </motion.div>
 
       {/* Popular Pods Section */}
