@@ -27,6 +27,8 @@ export function UserProvider({ children }) {
 
       fetchUser();
     } else {
+      setUser(null); // Reset user to null if there's no session
+      setError(null); // Reset error to null if there's no session
       setLoading(false); // If there's no session, stop loading
     }
   }, [session]);
