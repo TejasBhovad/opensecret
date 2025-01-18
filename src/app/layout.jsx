@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AuthProvider from "./providers/auth-providers";
 import { SidebarSquareWrapper } from "./components/sidebar-square";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -32,17 +33,19 @@ export default function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarSquareWrapper>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="h-full w-full">
-                <div className="absolute">
-                  <SidebarTrigger />
-                </div>
-                <main className="h-full bg-red-400 pt-6">{children}</main>
-              </main>
-            </SidebarProvider>
-          </SidebarSquareWrapper>
+          <AuthProvider>
+            <SidebarSquareWrapper>
+              <SidebarProvider>
+                <AppSidebar />
+                <main className="h-full w-full">
+                  <div className="absolute">
+                    <SidebarTrigger />
+                  </div>
+                  <main className="h-full bg-red-400 pt-6">{children}</main>
+                </main>
+              </SidebarProvider>
+            </SidebarSquareWrapper>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
