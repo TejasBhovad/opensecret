@@ -1,10 +1,11 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AuthProvider from "./providers/auth-providers";
 import { SidebarSquareWrapper } from "./components/sidebar-square";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
-import { Square } from "lucide-react";
+import { UserProvider } from "@/hooks/user";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,17 +33,21 @@ export default function RootLayout({ children }) {
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarSquareWrapper>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="h-full w-full">
-                <div className="absolute">
-                  <SidebarTrigger />
-                </div>
-                <main className="h-full bg-red-400 pt-6">{children}</main>
-              </main>
-            </SidebarProvider>
-          </SidebarSquareWrapper>
+          <AuthProvider>
+            <UserProvider>
+              <SidebarSquareWrapper>
+                <SidebarProvider>
+                  <AppSidebar />
+                  <main className="h-full w-full">
+                    <div className="absolute">
+                      <SidebarTrigger />
+                    </div>
+                    <main className="h-full bg-red-400 pt-6">{children}</main>
+                  </main>
+                </SidebarProvider>
+              </SidebarSquareWrapper>
+            </UserProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

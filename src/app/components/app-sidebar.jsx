@@ -1,6 +1,7 @@
 "use client";
-
 import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import SignIn from "./auth/sign-in-button";
+import SignOut from "./auth/sign-out-button";
 import { ModeToggle } from "./mode-toggle";
 import { Package, BookHeart, TimerReset } from "lucide-react";
 import {
@@ -16,6 +17,7 @@ import {
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
+import { useSession } from "next-auth/react";
 const items = [
   {
     title: "Home",
@@ -125,8 +127,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <div className="px-2 py-2">
+      <div className="flex flex-col gap-2 px-2 py-2">
         <ModeToggle />
+        {session ? <SignOut /> : <SignIn />}
       </div>
     </Sidebar>
   );
