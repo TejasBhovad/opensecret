@@ -26,6 +26,22 @@ export const users = pgTable("users", {
   joined_at: timestamp("joined_at").defaultNow(),
 });
 
+// add relation to allow for user to follow other users
+export const userFollows = pgTable(
+  "user_follows",
+  {
+    id: serial("id").primaryKey(), // Added serial primary key
+    follower_id: integer("follower_id").references(() => users.user_id),
+    user_id: integer("user_id").references(() => users.user_id),
+  },
+  (table) => ({
+    uniqueIdx: uniqueIndex("user_follows_unique_idx").on(
+      table.follower_id,
+      table.user_id,
+    ),
+  }),
+);
+
 // Pods Table
 export const pods = pgTable("pods", {
   pod_id: serial("pod_id").primaryKey(),

@@ -1,7 +1,10 @@
+"use client";
+import { useUser } from "@/hooks/user";
 import React from "react";
-import { searchPods } from "../../../utils/db/action";
+
 const page = () => {
-  return <div>page</div>;
+  const user = useUser();
+  return <div>{JSON.stringify(user)}</div>;
 };
 
 export default page;
