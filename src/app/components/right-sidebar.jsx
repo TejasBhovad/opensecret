@@ -113,7 +113,6 @@ const RightSidebar = () => {
   return (
     <div className="h-full w-full space-y-6 p-4">
       {/* Trending Tags Section */}
-      {JSON.stringify(user)}
       <motion.div
         className="space-y-2"
         initial="hidden"
@@ -140,8 +139,6 @@ const RightSidebar = () => {
         </motion.div>
       </motion.div>
 
-      // RightSidebar.jsx
-// In the existing component, replace the Suggested Users section with:
 
 {/* Suggested Users Section */}
 <motion.div
