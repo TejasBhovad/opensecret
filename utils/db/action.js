@@ -13,6 +13,7 @@ import {
   storyRelations,
   storyThreads,
   userFollows,
+  podShares,
 } from "./schema";
 
 export async function registerUser({ email, profile, name }) {
@@ -58,6 +59,7 @@ export async function createPod({
   is_public,
   subtag,
   domain,
+  name,
   description,
 }) {
   try {
@@ -71,6 +73,7 @@ export async function createPod({
         admin_id: admin_id,
         is_public: is_public ?? true,
         subtag: subtag,
+        name: name,
         domain: domain,
         description: description || "",
         created_at: new Date(),
@@ -510,7 +513,7 @@ export async function getUserStories(user_id) {
 // get all hashtags
 export async function getAllHashtags() {
   try {
-    const results = await db.select().from(hashtags);
+    const results = await db.select().from(hashtags).limit(4);
 
     return results;
   } catch (error) {
@@ -652,8 +655,7 @@ export async function getSuggestedPods(user_id) {
           ),
         ),
       )
-      .limit(5);
-
+      .limit(4);
     return results;
   } catch (error) {
     console.error("Get suggested pods error:", error);
@@ -666,7 +668,6 @@ export async function getSuggestedUsers(user_id) {
     const userFollowing = await db
       .select()
       .from(userFollows)
-      .innerJoin(users, eq(userFollows.user_id, users.user_id))
       .where(eq(userFollows.follower_id, user_id));
 
     const userFollowingIds = userFollowing.map((follow) => follow.user_id);
@@ -706,6 +707,33 @@ export async function getPopularStories() {
     return results;
   } catch (error) {
     console.error("Get popular stories error:");
+    throw error;
+  }
+}
+export async function getSharedPods(email) {
+  try {
+    const results = await db
+      .select()
+      .from(podShares)
+      .innerJoin(pods, eq(podShares.pod_id, pods.pod_id))
+      .where(eq(podShares.shared_email, email));
+
+    return results;
+  } catch (error) {
+    console.error("Get shared pods error:", error);
+    throw error;
+  }
+}
+export async function sharePod({ pod_id, email }) {
+  try {
+    await db.insert(podShares).values({
+      pod_id,
+      shared_email: email,
+      shared_at: new Date(),
+    });
+    return true;
+  } catch (error) {
+    console.error("Share pod error:", error);
     throw error;
   }
 }
