@@ -1,5 +1,5 @@
 "use server";
-import { and, eq, like, or, sql, desc } from "drizzle-orm";
+import { and, eq, like, or, sql, desc, inArray, not } from "drizzle-orm";
 import { db } from "./dbconfig";
 import {
   bookmarks,
@@ -661,25 +661,27 @@ export async function getSuggestedPods(user_id) {
   }
 }
 
-// get suggested users
 export async function getSuggestedUsers(user_id) {
-  console.log("user_id", user_id);
   try {
-    const user = await getUserById(user_id);
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const userFollowing = await db
+      .select()
+      .from(userFollows)
+      .innerJoin(users, eq(userFollows.user_id, users.user_id))
+      .where(eq(userFollows.follower_id, user_id));
 
-    const userFollowing = await getUserFollowing(user_id);
     const userFollowingIds = userFollowing.map((follow) => follow.user_id);
 
     const results = await db
-      .select()
+      .select({
+        user_id: users.user_id,
+        name: users.name,
+        profile: users.profile,
+      })
       .from(users)
       .where(
         and(
-          eq(users.user_id, user_id),
-          sql`${users.user_id} NOT IN (${userFollowingIds})`,
+          not(eq(users.user_id, user_id)),
+          not(inArray(users.user_id, userFollowingIds)),
         ),
       )
       .limit(5);
