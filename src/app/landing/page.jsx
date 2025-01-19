@@ -39,7 +39,7 @@ export default function LandingPage() {
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
                   One stop for real stories, true bonds, and shared experiences.
-                  Join our community where authenticity meets connection.
+                  Join our platform where authenticity meets connection.
                 </p>
               </div>
               <div className="space-x-4 ">
