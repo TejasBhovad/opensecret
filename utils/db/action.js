@@ -783,3 +783,17 @@ export async function fetchStoriesForUser(user_id) {
     throw error;
   }
 }
+
+export async function fetchAllStories() {
+  try {
+    const results = await db
+      .select()
+      .from(stories)
+      .orderBy(stories.created_at, desc)
+      .limit(10);
+    return results;
+  } catch (error) {
+    console.error("Fetch all stories error:", error);
+    throw error;
+  }
+}

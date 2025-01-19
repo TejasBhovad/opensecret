@@ -3,7 +3,32 @@ import Google from "next-auth/providers/google";
 import { registerUser, getUserByEmail } from "./utils/db/action";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Google],
+  pages: {
+    signIn: "/landing",
+  },
   callbacks: {
+    authorized({ request, auth }) {
+      const { pathname } = request.nextUrl;
+
+      const protectedRoutes = [
+        "/journal",
+        "/explore",
+        "/create",
+        "/capsule",
+        "/archived",
+        "/",
+      ];
+
+      const isProtectedRoute = protectedRoutes.some((route) =>
+        pathname.startsWith(route),
+      );
+
+      if (isProtectedRoute) {
+        return !!auth;
+      }
+
+      return true;
+    },
     async signIn({ user }) {
       try {
         console.log("USER", user);

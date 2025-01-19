@@ -114,7 +114,7 @@ export function AppSidebar() {
                   key={item.title}
                   className={`rounded-lg transition-all duration-200 ${
                     theme === "dark"
-                      ? "hover:bg-gray-700"
+                      ? "hover:bg-gray-700/25"
                       : "text-gray-900 hover:bg-gray-300"
                   }`}
                 >

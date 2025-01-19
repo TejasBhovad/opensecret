@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { CreatePost } from "./components/create-post";
 import { PostCard } from "./components/post-card";
 import { useUser } from "@/hooks/user";
-import { fetchStoriesForUser } from "../../utils/db/action";
+import { fetchStoriesForUser, fetchAllStories } from "../../utils/db/action";
 
 // Dummy initial posts
 const initialPosts = [
@@ -47,6 +47,26 @@ export default function Home() {
     fetchStories();
   }, [user]); // Add user as a dependency
 
+  const [allStories, setAllStories] = useState([]);
+  const [loadingStories, setLoadingStories] = useState(true);
+
+  // Fetch all stories
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        setLoadingStories(true);
+        const fetchedStories = await fetchAllStories();
+        setAllStories(fetchedStories);
+      } catch (error) {
+        console.error("Error fetching all stories:", error);
+      } finally {
+        setLoadingStories(false);
+      }
+    };
+
+    fetchAll();
+  }, []);
+
   const handleCreatePost = (newPost) => {
     const post = {
       id: Date.now().toString(),
@@ -73,6 +93,18 @@ export default function Home() {
         {stories.map((story) => (
           <PostCard key={story.story_id} story={story} />
         ))}
+      </div>
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold">All Stories</h2>
+        {loadingStories ? (
+          <p>Loading stories...</p>
+        ) : (
+          <div className="mt-4 flex h-auto w-full flex-col gap-2">
+            {allStories.map((story) => (
+              <PostCard key={story.story_id} story={story} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
