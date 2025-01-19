@@ -668,7 +668,6 @@ export async function getSuggestedUsers(user_id) {
     const userFollowing = await db
       .select()
       .from(userFollows)
-      .innerJoin(users, eq(userFollows.user_id, users.user_id))
       .where(eq(userFollows.follower_id, user_id));
 
     const userFollowingIds = userFollowing.map((follow) => follow.user_id);
