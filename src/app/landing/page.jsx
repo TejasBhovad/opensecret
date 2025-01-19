@@ -17,6 +17,7 @@ import {
   Share2,
   BookMarked,
   Mountain,
+  Lock,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -24,7 +25,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
         <Link className="flex items-center justify-center" href="#">
-          <Mountain className="h-6 w-6" />
+          <Lock className="h-6 w-6" />
           <span className="ml-2 text-xl font-bold">Open Secret</span>
         </Link>
       </header>
@@ -33,7 +34,7 @@ export default function LandingPage() {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
+                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none pg bg-clip-text text-transparent bg-gradient-to-b from-slate-300 to-slate-600">
                   Share Your Story, Connect with Hearts
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
@@ -41,8 +42,8 @@ export default function LandingPage() {
                   Join our community where authenticity meets connection.
                 </p>
               </div>
-              <div className="space-x-4">
-                <Button className="px-8">Get Started</Button>
+              <div className="space-x-4 ">
+                <Button className="px-8 bg-slate-400">Get Started</Button>
                 <Button variant="outline" className="px-8">
                   Learn More
                 </Button>
@@ -50,7 +51,7 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-gray-800">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 dark:bg-slate-600">
           <div className="container px-4 md:px-6">
             <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
               <Card>
