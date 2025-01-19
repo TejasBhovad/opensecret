@@ -47,28 +47,23 @@ const RightSidebar = () => {
     fetchUsers();
   }, [user]);
 
-  const pods = [
-    {
-      name: "Pod 1",
-      followers: 3,
-      image: "https://randomuser.me/api/portraits/lego/4.jpg",
-    },
-    {
-      name: "Pod 2",
-      followers: 5,
-      image: "https://randomuser.me/api/portraits/lego/5.jpg",
-    },
-    {
-      name: "Pod 3",
-      followers: 4,
-      image: "https://randomuser.me/api/portraits/lego/6.jpg",
-    },
-    {
-      name: "Pod 4",
-      followers: 2,
-      image: "https://randomuser.me/api/portraits/lego/7.jpg",
-    },
-  ];
+  const [pods, setPods] = useState([]);
+  const [loadingPods, setLoadingPods] = useState(true);
+  const [errorPods, setErrorPods] = useState(null);
+  useEffect(() => {
+    const fetchPods = async () => {
+      try {
+        setLoadingPods(true);
+        const fetchedPods = await getSuggestedPods(user.user_id);
+        setPods(fetchedPods);
+      } catch (err) {
+        setErrorPods(err.message);
+      } finally {
+        setLoadingPods(false);
+      }
+    };
+    fetchPods();
+  }, [user]);
 
   // State to track followed users and pods
   const [followedUsers, setFollowedUsers] = useState(new Set());
@@ -174,39 +169,7 @@ const RightSidebar = () => {
         <motion.h3 className="mb-3 text-lg font-semibold">
           Popular Pods
         </motion.h3>
-        <motion.div className="space-y-3">
-          {randomPods.map((pod) => (
-            <motion.div
-              key={pod.name}
-              className="flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-secondary/10"
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src={pod.image}
-                  alt={pod.name}
-                  className="h-10 w-10 rounded-full"
-                />
-                <div>
-                  <p className="text-sm font-medium">{pod.name}</p>
-                  <p className="text-sm text-foreground/50">
-                    {pod.followers} followers
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => toggleFollowPod(pod.name)}
-                className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
-                  followedPods.has(pod.name)
-                    ? "bg-primary/20 text-background"
-                    : "bg-primary text-background hover:bg-primary/90"
-                }`}
-              >
-                {followedPods.has(pod.name) ? "Following" : "Follow"}
-              </button>
-            </motion.div>
-          ))}
-        </motion.div>
+        <motion.div className="space-y-3">{JSON.stringify(pods)}</motion.div>
       </motion.div>
     </div>
   );
