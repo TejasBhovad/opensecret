@@ -140,21 +140,54 @@ const RightSidebar = () => {
         </motion.div>
       </motion.div>
 
-      {/* Suggested Users Section */}
+      // RightSidebar.jsx
+// In the existing component, replace the Suggested Users section with:
+
+{/* Suggested Users Section */}
+<motion.div
+  className="space-y-2"
+  initial="hidden"
+  animate="visible"
+  variants={{
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  }}
+>
+  <motion.h3 className="mb-3 text-lg font-semibold">
+    Suggested Users
+  </motion.h3>
+  <motion.div className="space-y-3">
+    {users.map((user) => (
       <motion.div
-        className="space-y-2"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-        }}
+        key={user.user_id}
+        variants={itemVariants}
+        className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 hover:bg-secondary/30 transition-colors"
       >
-        <motion.h3 className="mb-3 text-lg font-semibold">
-          Suggested Users
-        </motion.h3>
-        <motion.div className="space-y-3">{JSON.stringify(users)}</motion.div>
+        <div className="flex items-center gap-3">
+          <img
+            src={user.profile}
+            alt={user.name}
+            className="w-10 h-10 rounded-full"
+          />
+          <div className="flex flex-col">
+            <span className="font-medium text-sm">{user.name}</span>
+            <span className="text-xs text-foreground/60">@user_{user.user_id}</span>
+          </div>
+        </div>
+        <button
+          onClick={() => toggleFollowUser(user.user_id)}
+          className={`px-4 py-1 text-sm font-medium rounded-full transition-colors
+            ${followedUsers.has(user.user_id)
+              ? 'bg-primary/10 text-primary hover:bg-primary/20'
+              : 'bg-primary text-primary-foreground hover:bg-primary/90'
+            }`}
+        >
+          {followedUsers.has(user.user_id) ? 'Following' : 'Follow'}
+        </button>
       </motion.div>
+    ))}
+  </motion.div>
+</motion.div>
 
       {/* Popular Pods Section */}
       <motion.div
