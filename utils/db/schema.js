@@ -218,3 +218,24 @@ export const storyRelations = relations(stories, ({ one, many }) => ({
   }),
   threads: many(storyThreads),
 }));
+export const podShares = pgTable(
+  "pod_shares",
+  {
+    id: serial("id").primaryKey(),
+    pod_id: integer("pod_id").references(() => pods.pod_id),
+    shared_email: varchar("shared_email", { length: 255 }),
+    shared_at: timestamp("shared_at").defaultNow(),
+  },
+  (table) => ({
+    uniqueIdx: uniqueIndex("pod_shares_unique_idx").on(
+      table.pod_id,
+      table.shared_email,
+    ),
+  }),
+);
+export const podSharesRelations = relations(podShares, ({ one }) => ({
+  pod: one(pods, {
+    fields: [podShares.pod_id],
+    references: [pods.pod_id],
+  }),
+}));

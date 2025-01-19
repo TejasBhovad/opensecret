@@ -2,7 +2,7 @@
 import { motion } from "motion/react";
 import { useState } from "react";
 import { createPod } from "../../../utils/db/action.js";
-
+import { sharePod } from "../../../utils/db/action.js";
 // Custom Alert Component
 const Alert = ({ type, message, onClose }) => {
   const alertStyles = {
@@ -84,7 +84,7 @@ const CreatePod = () => {
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");
-
+  const [emails, setEmails] = useState("");
   // Validation Function
   const validateForm = () => {
     if (!description.trim()) {
@@ -138,6 +138,10 @@ const CreatePod = () => {
         domain: domain === "Other" ? customDomain : domain,
         description,
         name: name,
+      });
+      const share = await sharePod({
+        pod_id: newPod.pod_id,
+        emails: emails,
       });
 
       showAlert("success", "Pod Created like a BOSS! 💪");
@@ -272,6 +276,15 @@ const CreatePod = () => {
             />
             <span className="text-foreground"> Public</span>
           </div>
+          {!isPublic && (
+            <input
+              type="text"
+              placeholder="Enter emails to share your pod with..."
+              value={emails}
+              onChange={(e) => setEmails(e.target.value)}
+              className="mt-2 w-full rounded-lg bg-foreground/10 p-3 text-foreground transition focus:ring-2 focus:ring-blue-500"
+            />
+          )}
 
           {/* Submit Button */}
           <button

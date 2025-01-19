@@ -3,15 +3,31 @@ import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useUser } from "@/hooks/user";
 import {
+  followUser,
+  unfollowUser,
   getSuggestedPods,
   getSuggestedUsers,
   getAllHashtags,
 } from "../../../utils/db/action";
+
 const RightSidebar = () => {
   const { user, loading, error } = useUser();
   const [hashtags, setHashtags] = useState([]);
   const [loadingHashtags, setLoadingHashtags] = useState(true);
   const [errorHashtags, setErrorHashtags] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [errorUsers, setErrorUsers] = useState(null);
+  const [pods, setPods] = useState([]);
+  const [loadingPods, setLoadingPods] = useState(true);
+  const [errorPods, setErrorPods] = useState(null);
+  const [followedUsers, setFollowedUsers] = useState(new Set());
+  const [followedPods, setFollowedPods] = useState(new Set());
+  const [randomHashtags, setRandomHashtags] = useState([]);
+  const [randomUsers, setRandomUsers] = useState([]);
+  const [randomPods, setRandomPods] = useState([]);
+
+  // Fetch hashtags
   useEffect(() => {
     const fetchHashtags = async () => {
       try {
@@ -27,16 +43,13 @@ const RightSidebar = () => {
     fetchHashtags();
   }, []);
 
-  const [users, setUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [errorUsers, setErrorUsers] = useState(null);
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoadingUsers(true);
-        console.log(user);
+        if (!user) return;
         const fetchedUsers = await getSuggestedUsers(user.user_id);
-        console.log(fetchedUsers);
         setUsers(fetchedUsers);
       } catch (err) {
         setErrorUsers(err.message);
@@ -47,13 +60,12 @@ const RightSidebar = () => {
     fetchUsers();
   }, [user]);
 
-  const [pods, setPods] = useState([]);
-  const [loadingPods, setLoadingPods] = useState(true);
-  const [errorPods, setErrorPods] = useState(null);
+  // Fetch pods
   useEffect(() => {
     const fetchPods = async () => {
       try {
         setLoadingPods(true);
+        if (!user) return;
         const fetchedPods = await getSuggestedPods(user.user_id);
         setPods(fetchedPods);
       } catch (err) {
@@ -65,32 +77,29 @@ const RightSidebar = () => {
     fetchPods();
   }, [user]);
 
-  // State to track followed users and pods
-  const [followedUsers, setFollowedUsers] = useState(new Set());
-  const [followedPods, setFollowedPods] = useState(new Set());
-
-  // State to store the randomized data
-  const [randomHashtags, setRandomHashtags] = useState([]);
-  const [randomUsers, setRandomUsers] = useState([]);
-  const [randomPods, setRandomPods] = useState([]);
-
+  // Set random data on initial load
   useEffect(() => {
-    // Randomize the data only on initial load
     setRandomHashtags(hashtags.sort(() => Math.random() - 0.5).slice(0, 4));
     setRandomUsers(users.sort(() => Math.random() - 0.5).slice(0, 4));
     setRandomPods(pods.sort(() => Math.random() - 0.5).slice(0, 4));
-  }, []);
+  }, [hashtags, users, pods]);
 
-  const toggleFollowUser = (username) => {
-    setFollowedUsers((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(username)) {
-        newSet.delete(username);
+  const toggleFollowUser = async (userId) => {
+    try {
+      if (followedUsers.has(userId)) {
+        await unfollowUser(user.user_id, userId);
+        setFollowedUsers((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(userId);
+          return newSet;
+        });
       } else {
-        newSet.add(username);
+        await followUser(user.user_id, userId);
+        setFollowedUsers((prev) => new Set(prev).add(userId));
       }
-      return newSet;
-    });
+    } catch (error) {
+      console.error("Error following/unfollowing user:", error);
+    }
   };
 
   const toggleFollowPod = (podName) => {
@@ -126,67 +135,20 @@ const RightSidebar = () => {
           Trending Tags
         </motion.h3>
         <motion.div className="grid grid-cols-2 grid-rows-2 gap-2">
-          {randomHashtags.map((tag) => (
+          {randomHashtags.map((tag, index) => (
             <motion.div
-              key={tag}
+              key={tag.id || index} // Ensure each tag has a unique key
               className="flex cursor-pointer items-center justify-center gap-1 truncate rounded-full bg-secondary/50 p-2 text-foreground transition-colors hover:bg-secondary/70"
               variants={itemVariants}
             >
               <span className="text-foreground/50">#</span>
-              {tag}
+              {tag.name}
             </motion.div>
           ))}
         </motion.div>
       </motion.div>
 
-
-{/* Suggested Users Section */}
-<motion.div
-  className="space-y-2"
-  initial="hidden"
-  animate="visible"
-  variants={{
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  }}
->
-  <motion.h3 className="mb-3 text-lg font-semibold">
-    Suggested Users
-  </motion.h3>
-  <motion.div className="space-y-3">
-    {users.map((user) => (
-      <motion.div
-        key={user.user_id}
-        variants={itemVariants}
-        className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 hover:bg-secondary/30 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <img
-            src={user.profile}
-            alt={user.name}
-            className="w-10 h-10 rounded-full"
-          />
-          <div className="flex flex-col">
-            <span className="font-medium text-sm">{user.name}</span>
-            <span className="text-xs text-foreground/60">@user_{user.user_id}</span>
-          </div>
-        </div>
-        <button
-          onClick={() => toggleFollowUser(user.user_id)}
-          className={`px-4 py-1 text-sm font-medium rounded-full transition-colors
-            ${followedUsers.has(user.user_id)
-              ? 'bg-primary/10 text-primary hover:bg-primary/20'
-              : 'bg-primary text-primary-foreground hover:bg-primary/90'
-            }`}
-        >
-          {followedUsers.has(user.user_id) ? 'Following' : 'Follow'}
-        </button>
-      </motion.div>
-    ))}
-  </motion.div>
-</motion.div>
-
-      {/* Popular Pods Section */}
+      {/* Suggested Users Section */}
       <motion.div
         className="space-y-2"
         initial="hidden"
@@ -197,9 +159,87 @@ const RightSidebar = () => {
         }}
       >
         <motion.h3 className="mb-3 text-lg font-semibold">
+          Suggested Users
+        </motion.h3>
+        <motion.div className="space-y-3">
+          {randomUsers.map((user) => (
+            <motion.div
+              key={user.user_id} // Ensure each user has a unique key
+              variants={itemVariants}
+              className="flex items-center justify-between rounded-lg bg-secondary/20 p-3 transition-colors hover:bg-secondary/30"
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={user.profile}
+                  alt={user.name}
+                  className="h-10 w-10 rounded-full"
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{user.name}</span>
+                  <span className="text-xs text-foreground/60">
+                    @user_{user.user_id}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => toggleFollowUser(user.user_id)}
+                className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
+                  followedUsers.has(user.user_id)
+                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                }`}
+              >
+                {followedUsers.has(user.user_id) ? "Following" : "Follow"}
+              </button>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+
+      {/* Popular Pods Section */}
+      <motion.div
+        className="space-y-2"
+        initial="hidden"
+        animate="visible"
+        // Remove the key prop from here as it's not needed
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+        }}
+      >
+        <motion.h3 className="mb-3 text-lg font-semibold">
           Popular Pods
         </motion.h3>
-        <motion.div className="space-y-3">{JSON.stringify(pods)}</motion.div>
+
+        {randomPods.map((pod) => (
+          <motion.div
+            // Ensure we have a fallback if pod.id is undefined
+            key={pod.id || pod.name || `pod-${Math.random()}`}
+            variants={itemVariants}
+            className="flex items-center justify-between rounded-lg bg-secondary/20 p-3 transition-colors hover:bg-secondary/30"
+          >
+            <div className="flex items-center gap-3">
+              <img
+                src={pod.image}
+                alt={pod.name}
+                className="h-10 w-10 rounded-full"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{pod.name}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => toggleFollowPod(pod.name)}
+              className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
+                followedPods.has(pod.name)
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
+            >
+              {followedPods.has(pod.name) ? "Following" : "Follow"}
+            </button>
+          </motion.div>
+        ))}
       </motion.div>
     </div>
   );

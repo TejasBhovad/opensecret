@@ -18,12 +18,18 @@ import {
 } from "@/components/ui/sidebar";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 
 const items = [
   {
     title: "Home",
     url: "/",
     icon: Home,
+  },
+  {
+    title: "Create Pod",
+    url: "/create",
+    icon: Plus,
   },
   {
     title: "Explore",
