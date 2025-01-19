@@ -147,18 +147,16 @@ export const timeCapsules = pgTable(
 export const stories = pgTable("stories", {
   story_id: serial("story_id").primaryKey(),
   pod_id: integer("pod_id").references(() => pods.pod_id),
-  user_id: integer("user_id").references(() => users.user_id),
-  content: text("content"),
-  reactions: jsonb("reactions"),
+  user_id: integer("user_id").references(() => users.user_id), // Changed to text to match user login
+  content: text("content").notNull(),
+  title: text("title").notNull(), // Added title
   hashtags: text("hashtags").array(),
   created_at: timestamp("created_at").defaultNow(),
-
-  // Additional story metadata
   likes_count: integer("likes_count").default(0),
   comments_count: integer("comments_count").default(0),
+  reactions: jsonb("reactions").default({}),
   is_featured: boolean("is_featured").default(false),
 });
-
 // Story Threads Table
 export const storyThreads = pgTable("story_threads", {
   thread_id: serial("thread_id").primaryKey(),
@@ -239,3 +237,9 @@ export const podSharesRelations = relations(podShares, ({ one }) => ({
     references: [pods.pod_id],
   }),
 }));
+export const userReactions = pgTable("user_reactions", {
+  user_id: text("user_id").notNull(),
+  story_id: text("story_id").notNull(),
+  reaction_type: text("reaction_type").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+});

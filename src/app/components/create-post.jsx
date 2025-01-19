@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import {
+  getUserPods,
+  createStory,
+  getUserStories,
+} from "../../../utils/db/action";
+import { useEffect, useState } from "react";
+import { useUser } from "@/hooks/user";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -12,43 +18,136 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Box } from "lucide-react";
+import { PostCard } from "./post-card";
 
-export function CreatePost({ onCreatePost }) {
+export function CreatePost() {
+  const { user } = useUser();
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [hashtags, setHashtags] = useState([]);
   const [newHashtag, setNewHashtag] = useState("");
   const [selectedPod, setSelectedPod] = useState("");
-  const [isTimeCapsule, setIsTimeCapsule] = useState(false);
+  const [pods, setPods] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    if (!content.trim() || !selectedPod) return;
+  const [stories, setStories] = useState([]);
+  const [error, setError] = useState(null);
+  const [loadingStories, setLoadingStories] = useState(true);
 
-    onCreatePost({
-      content,
-      hashtags,
-      pod: selectedPod,
-      isTimeCapsule,
-    });
+  // Fetch user stories
+  useEffect(() => {
+    const fetchStories = async () => {
+      if (!user) return; // Exit if user is not available
 
-    // Reset form
+      try {
+        setLoadingStories(true);
+        const fetchedStories = await getUserStories(user.user_id);
+        setStories(fetchedStories);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoadingStories(false);
+      }
+    };
+
+    fetchStories();
+  }, [user]); // Dependency on user
+
+  // Fetch user pods
+  useEffect(() => {
+    const fetchPods = async () => {
+      if (!user) return; // Exit if user is not available
+
+      try {
+        const userPods = await getUserPods(user.user_id);
+        setPods(userPods);
+      } catch (error) {
+        console.error("Error fetching pods:", error);
+      }
+    };
+    fetchPods();
+  }, [user]);
+
+  // Handle story submission
+  const handleSubmit = async () => {
+    if (!content.trim() || !selectedPod || !user || !title.trim()) return;
+
+    try {
+      setLoading(true);
+      console.log(
+        "Creating story...",
+        user.user_id,
+        selectedPod,
+        title.trim(),
+        content.trim(),
+        hashtags,
+      );
+      await createStory({
+        pod_id: selectedPod,
+        author_id: user.user_id,
+        title: title.trim(),
+        content: content.trim(),
+        tags: hashtags,
+        is_draft: false,
+      });
+
+      // Reset form
+      resetForm();
+    } catch (error) {
+      console.error("Error creating story:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset form fields
+  const resetForm = () => {
+    setTitle("");
     setContent("");
     setHashtags([]);
     setSelectedPod("");
-    setIsTimeCapsule(false);
+    setNewHashtag("");
   };
 
+  // Handle hashtag input
   const handleHashtagKeyDown = (e) => {
-    if (e.key === "Enter" && newHashtag.trim()) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      setHashtags([...hashtags, newHashtag.trim()]);
+      addHashtag();
+    }
+  };
+
+  // Add a new hashtag
+  const addHashtag = () => {
+    const cleanTag = newHashtag
+      .trim()
+      .toLowerCase()
+      .replace(/^#/, "")
+      .replace(/[^a-z0-9]/g, "");
+
+    if (cleanTag && !hashtags.includes(cleanTag)) {
+      setHashtags([...hashtags, cleanTag]);
       setNewHashtag("");
     }
   };
 
+  // Remove a hashtag
+  const removeHashtag = (tagToRemove) => {
+    setHashtags(hashtags.filter((tag) => tag !== tagToRemove));
+  };
+
   return (
     <div className="space-y-4 rounded-lg bg-background p-4">
+      <input
+        type="text"
+        placeholder="Story Title..."
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="w-full bg-background p-2 text-xl font-bold outline-none"
+      />
+
       <Textarea
-        placeholder="Post Story..."
+        placeholder="Write your story..."
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className="min-h-[100px] bg-background"
@@ -60,10 +159,10 @@ export function CreatePost({ onCreatePost }) {
             variant="ghost"
             size="sm"
             className="text-muted-foreground"
-            onClick={() => document.getElementById("hashtag-input")?.focus()}
+            onClick={addHashtag}
           >
             <Plus className="mr-1 h-4 w-4" />
-            Hashtag
+            Add Tag
           </Button>
           <input
             id="hashtag-input"
@@ -71,7 +170,7 @@ export function CreatePost({ onCreatePost }) {
             value={newHashtag}
             onChange={(e) => setNewHashtag(e.target.value)}
             onKeyDown={handleHashtagKeyDown}
-            placeholder="Press enter to add"
+            placeholder="Enter hashtag"
             className="bg-transparent text-sm outline-none"
           />
         </div>
@@ -82,24 +181,38 @@ export function CreatePost({ onCreatePost }) {
             <SelectValue placeholder="Select Pod" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="technology">Technology</SelectItem>
-            <SelectItem value="design">Design</SelectItem>
-            <SelectItem value="marketing">Marketing</SelectItem>
+            {pods.map((pod) => (
+              <SelectItem key={pod.pod_id} value={pod.pod_id}>
+                {pod.title}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
-        <Button onClick={handleSubmit}>Post</Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={loading || !content.trim() || !selectedPod || !title.trim()}
+        >
+          {loading ? "Posting..." : "Post Story"}
+        </Button>
       </div>
 
       {hashtags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {hashtags.map((tag) => (
-            <Badge key={tag} variant="secondary">
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={() => removeHashtag(tag)}
+            >
               #{tag}
             </Badge>
           ))}
         </div>
       )}
+
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }

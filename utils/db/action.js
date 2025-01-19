@@ -15,6 +15,7 @@ import {
   userFollows,
   podShares,
 } from "./schema";
+import { auth } from "../../auth";
 
 export async function registerUser({ email, profile, name }) {
   try {
@@ -495,13 +496,12 @@ export async function getUserPods(user_id) {
   }
 }
 
-// Get User Created Stories
 export async function getUserStories(user_id) {
   try {
     const results = await db
       .select()
       .from(stories)
-      .where(eq(stories.author_id, user_id));
+      .where(eq(stories.user_id, user_id));
 
     return results;
   } catch (error) {
@@ -734,6 +734,52 @@ export async function sharePod({ pod_id, email }) {
     return true;
   } catch (error) {
     console.error("Share pod error:", error);
+    throw error;
+  }
+}
+
+export async function createStory({
+  pod_id,
+  author_id,
+  title,
+  content,
+  tags,
+  is_draft,
+}) {
+  try {
+    const newStory = await db
+      .insert(stories)
+      .values({
+        pod_id,
+        author_id: author_id,
+        title,
+        content,
+        tags,
+        is_draft: is_draft ?? false,
+        created_at: new Date(),
+        likes_count: 0,
+      })
+      .returning();
+
+    return newStory[0];
+  } catch (error) {
+    console.error("Story creation error:", error);
+    throw error;
+  }
+}
+
+// get fetch story for users
+export async function fetchStoriesForUser(user_id) {
+  try {
+    const results = await db
+      .select()
+      .from(stories)
+      .where(eq(stories.user_id, user_id))
+      .orderBy(stories.created_at, desc)
+      .limit(5);
+    return results;
+  } catch (error) {
+    console.error("Fetch stories for user error:", error);
     throw error;
   }
 }
