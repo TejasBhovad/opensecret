@@ -1,11 +1,11 @@
 "use client";
-
+import { OnBoarding } from "./components/onboarding";
 import { useState, useEffect } from "react";
 import { CreatePost } from "./components/create-post";
 import { PostCard } from "./components/post-card";
 import { useUser } from "@/hooks/user";
 import { fetchStoriesForUser, fetchAllStories } from "../../utils/db/action";
-
+import { OnboardedUser } from "../../utils/db/action";
 // Dummy initial posts
 const initialPosts = [
   {
@@ -30,6 +30,10 @@ export default function Home() {
   const { user, loading, error } = useUser();
   const [posts, setPosts] = useState(initialPosts);
   const [stories, setStories] = useState([]);
+
+  // if (user && user.onboarded === false) {
+
+  // }
 
   // Fetch stories for the current user
   useEffect(() => {
@@ -106,6 +110,7 @@ export default function Home() {
           </div>
         )}
       </div>
+      <OnBoarding />
     </div>
   );
 }

@@ -797,3 +797,18 @@ export async function fetchAllStories() {
     throw error;
   }
 }
+
+export async function OnboardedUser(user_id) {
+  try {
+    await db
+      .update(users)
+      .set({
+        onboarded: true,
+      })
+      .where(eq(users.user_id, user_id));
+    return true;
+  } catch (error) {
+    console.error("Onboarded user error:", error);
+    throw error;
+  }
+}
