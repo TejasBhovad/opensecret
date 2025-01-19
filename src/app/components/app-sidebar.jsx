@@ -1,4 +1,5 @@
 "use client";
+
 import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 import SignIn from "./auth/sign-in-button";
 import SignOut from "./auth/sign-out-button";
