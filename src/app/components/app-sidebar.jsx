@@ -102,7 +102,7 @@ export function AppSidebar() {
       className={`${
         theme === "dark"
           ? "bg-gray-900 text-white"
-          : "bg-gray-100 text-gray-900"
+          : "bg-gray-100 text-foreground"
       } min-h-screen`}
     >
       <SidebarContent>

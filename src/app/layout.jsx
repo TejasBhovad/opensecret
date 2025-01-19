@@ -42,7 +42,7 @@ export default function RootLayout({ children }) {
                     <div className="absolute">
                       <SidebarTrigger />
                     </div>
-                    <main className="h-full bg-red-400 pt-6">{children}</main>
+                    <main className="h-full bg-red-400/0 pt-6">{children}</main>
                   </main>
                 </SidebarProvider>
               </SidebarSquareWrapper>
