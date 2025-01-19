@@ -44,6 +44,7 @@ export const userFollows = pgTable(
 
 // Pods Table
 export const pods = pgTable("pods", {
+  title: varchar("title", { length: 100 }),
   pod_id: serial("pod_id").primaryKey(),
   admin_id: integer("admin_id").references(() => users.user_id),
   is_public: boolean("is_public").default(true),

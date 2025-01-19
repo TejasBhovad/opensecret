@@ -58,6 +58,7 @@ export async function createPod({
   is_public,
   subtag,
   domain,
+  name,
   description,
 }) {
   try {
@@ -71,6 +72,7 @@ export async function createPod({
         admin_id: admin_id,
         is_public: is_public ?? true,
         subtag: subtag,
+        name: name,
         domain: domain,
         description: description || "",
         created_at: new Date(),
