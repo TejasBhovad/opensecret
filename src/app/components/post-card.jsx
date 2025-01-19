@@ -13,39 +13,24 @@ export function PostCard({ story }) {
   const [likeCount, setLikeCount] = useState(story.likes_count || 0);
   const shouldTruncate = story.content.length > 280;
 
-  // Load liked state and count from localStorage on mount
+  // Load liked state from localStorage on mount
   useEffect(() => {
     const liked = localStorage.getItem(`story-${story.story_id}-liked`);
-    const savedCount = localStorage.getItem(`story-${story.story_id}-count`);
-
     if (liked === "true") {
       setIsLiked(true);
     }
-
-    if (savedCount !== null) {
-      setLikeCount(parseInt(savedCount, 10));
-    } else {
-      // Initialize count in localStorage if it doesn't exist
-      localStorage.setItem(
-        `story-${story.story_id}-count`,
-        story.likes_count?.toString() || "0",
-      );
-    }
-  }, [story.story_id, story.likes_count]);
+  }, [story.story_id]);
 
   const handleLike = () => {
     const newLikedState = !isLiked;
-    const newCount = newLikedState ? likeCount + 1 : likeCount - 1;
-
     setIsLiked(newLikedState);
-    setLikeCount(newCount);
+    setLikeCount((prev) => (newLikedState ? prev + 1 : prev - 1));
 
-    // Save both state and count to localStorage
+    // Save to localStorage
     localStorage.setItem(
       `story-${story.story_id}-liked`,
       newLikedState.toString(),
     );
-    localStorage.setItem(`story-${story.story_id}-count`, newCount.toString());
   };
 
   // Format the date to be more readable
