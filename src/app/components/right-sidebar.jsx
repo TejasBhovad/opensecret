@@ -7,6 +7,8 @@ import {
   unfollowUser,
   getSuggestedPods,
   getSuggestedUsers,
+  followPod,
+  unfollowPod,
   getAllHashtags,
 } from "../../../utils/db/action";
 
@@ -26,6 +28,20 @@ const RightSidebar = () => {
   const [randomHashtags, setRandomHashtags] = useState([]);
   const [randomUsers, setRandomUsers] = useState([]);
   const [randomPods, setRandomPods] = useState([]);
+
+  // Dummy data for tags
+  const tags = [
+    { id: 1, name: "Tech" },
+    { id: 2, name: "Music" },
+    { id: 3, name: "Games" },
+    { id: 4, name: "Drama" },
+  ];
+
+  // Variants for animation
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   // Fetch hashtags
   useEffect(() => {
@@ -84,6 +100,7 @@ const RightSidebar = () => {
     setRandomPods(pods.sort(() => Math.random() - 0.5).slice(0, 4));
   }, [hashtags, users, pods]);
 
+  // Toggle follow/unfollow user
   const toggleFollowUser = async (userId) => {
     try {
       if (followedUsers.has(userId)) {
@@ -102,51 +119,55 @@ const RightSidebar = () => {
     }
   };
 
-  const toggleFollowPod = (podName) => {
-    setFollowedPods((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(podName)) {
-        newSet.delete(podName);
+  // Toggle follow/unfollow pod
+  const toggleFollowPod = async (podId) => {
+    try {
+      if (followedPods.has(podId)) {
+        await unfollowPod(user.user_id, podId);
+        setFollowedPods((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(podId);
+          return newSet;
+        });
       } else {
-        newSet.add(podName);
+        await followPod(user.user_id, podId);
+        setFollowedPods((prev) => new Set(prev).add(podId));
       }
-      return newSet;
-    });
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+    } catch (error) {
+      console.error("Error following/unfollowing pod:", error);
+    }
   };
 
   return (
     <div className="h-full w-full space-y-6 p-4">
-      {/* Trending Tags Section */}
-      <motion.div
-        className="space-y-2"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-        }}
-      >
-        <motion.h3 className="mb-3 text-lg font-semibold">
-          Trending Tags
-        </motion.h3>
-        <motion.div className="grid grid-cols-2 grid-rows-2 gap-2">
-          {randomHashtags.map((tag, index) => (
-            <motion.div
-              key={tag.id || index} // Ensure each tag has a unique key
-              className="flex cursor-pointer items-center justify-center gap-1 truncate rounded-full bg-secondary/50 p-2 text-foreground transition-colors hover:bg-secondary/70"
-              variants={itemVariants}
-            >
-              <span className="text-foreground/50">#</span>
-              {tag.name}
-            </motion.div>
-          ))}
+      {/* Fixed Tags Section */}
+      <div className="sticky top-0 z-10 p-4 shadow-md">
+        <motion.div
+          className="space-y-2"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+          }}
+        >
+          <motion.h3 className="mb-3 text-lg font-semibold">
+            Trending Tags
+          </motion.h3>
+          <motion.div className="grid grid-cols-2 gap-2">
+            {tags.map((tag) => (
+              <motion.div
+                key={tag.id}
+                className="flex cursor-pointer items-center justify-center gap-1 truncate rounded-full bg-secondary/50 p-2 text-foreground transition-colors hover:bg-secondary/70"
+                variants={itemVariants}
+              >
+                <span className="text-foreground/50">#</span>
+                {tag.name}
+              </motion.div>
+            ))}
+          </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
 
       {/* Suggested Users Section */}
       <motion.div
@@ -164,7 +185,7 @@ const RightSidebar = () => {
         <motion.div className="space-y-3">
           {randomUsers.map((user) => (
             <motion.div
-              key={user.user_id} // Ensure each user has a unique key
+              key={user.user_id}
               variants={itemVariants}
               className="flex items-center justify-between rounded-lg bg-secondary/20 p-3 transition-colors hover:bg-secondary/30"
             >
@@ -197,11 +218,11 @@ const RightSidebar = () => {
       </motion.div>
 
       {/* Popular Pods Section */}
+      {/* Popular Pods Section */}
       <motion.div
         className="space-y-2"
         initial="hidden"
         animate="visible"
-        // Remove the key prop from here as it's not needed
         variants={{
           hidden: { opacity: 0 },
           visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -210,33 +231,32 @@ const RightSidebar = () => {
         <motion.h3 className="mb-3 text-lg font-semibold">
           Popular Pods
         </motion.h3>
-
-        {randomPods.map((pod) => (
+        {randomPods.map((pod, index) => (
           <motion.div
-            // Ensure we have a fallback if pod.id is undefined
-            key={pod.id || pod.name || `pod-${Math.random()}`}
+            // Fallback to a combination of index and title if id is not available
+            key={pod.id || `pod-${pod.title}-${index}`}
             variants={itemVariants}
             className="flex items-center justify-between rounded-lg bg-secondary/20 p-3 transition-colors hover:bg-secondary/30"
           >
             <div className="flex items-center gap-3">
-              <img
-                src={pod.image}
-                alt={pod.name}
-                className="h-10 w-10 rounded-full"
-              />
               <div className="flex flex-col">
-                <span className="text-sm font-medium">{pod.name}</span>
+                <span className="text-sm font-medium">{pod.title}</span>
+                {pod.description && (
+                  <span className="text-xs text-foreground/60">
+                    {pod.description}
+                  </span>
+                )}
               </div>
             </div>
             <button
-              onClick={() => toggleFollowPod(pod.name)}
+              onClick={() => toggleFollowPod(pod.id)}
               className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
-                followedPods.has(pod.name)
+                followedPods.has(pod.id)
                   ? "bg-primary/10 text-primary hover:bg-primary/20"
                   : "bg-primary text-primary-foreground hover:bg-primary/90"
               }`}
             >
-              {followedPods.has(pod.name) ? "Following" : "Follow"}
+              {followedPods.has(pod.id) ? "Following" : "Follow"}
             </button>
           </motion.div>
         ))}
