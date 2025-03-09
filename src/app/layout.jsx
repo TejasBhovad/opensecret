@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { UserProvider } from "@/hooks/user";
+import { Toaster } from "@/components/ui/sonner";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
                     </div>
                     <main className="h-full bg-red-400/0 pt-6">{children}</main>
                   </main>
+                  <Toaster />
                 </SidebarProvider>
               </SidebarSquareWrapper>
             </UserProvider>

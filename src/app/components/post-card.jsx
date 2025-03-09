@@ -4,14 +4,22 @@ import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Share2 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function PostCard({ story }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(story.likes_count || 0);
   const shouldTruncate = story.content.length > 280;
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Load liked state from localStorage on mount
   useEffect(() => {
@@ -36,7 +44,13 @@ export function PostCard({ story }) {
   // Format the date to be more readable
   const formatDate = (dateString) => {
     try {
-      return formatDistanceToNow(parseISO(dateString), { addSuffix: true });
+      const date = parseISO(dateString);
+      // For recent content (< 24h), use relative time
+      const relativeTime = formatDistanceToNow(date, { addSuffix: true });
+
+      // For older content, show the actual date
+      const isRecent = Date.now() - date.getTime() < 24 * 60 * 60 * 1000;
+      return isRecent ? relativeTime : date.toLocaleDateString();
     } catch {
       return "Invalid date";
     }
@@ -49,44 +63,125 @@ export function PostCard({ story }) {
     return `${(count / 1000).toFixed(1)}K`;
   };
 
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (story.author_name) {
+      return story.author_name
+        .split(" ")
+        .map((name) => name[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    return "U";
+  };
+
   return (
-    <div className="space-y-4 rounded-lg border border-border bg-background p-4 shadow-sm">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="group rounded-xl border border-border/40 bg-card p-5 shadow-sm transition-all duration-300 hover:border-border hover:shadow-md"
+    >
       <div className="flex items-start gap-3">
-        <Avatar>
-          <AvatarImage src={`/api/avatar/${story.user_id}`} />
-          <AvatarFallback>U</AvatarFallback>
+        <Avatar className="h-10 w-10 border border-border/50 ring-2 ring-background">
+          <AvatarImage
+            src={`/api/avatar/${story.user_id}`}
+            onLoad={() => setIsImageLoaded(true)}
+            className={isImageLoaded ? "opacity-100" : "opacity-0"}
+          />
+          <AvatarFallback className="bg-primary/10 text-xs text-primary">
+            {getUserInitials()}
+          </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="font-semibold">{story.title}</h2>
-            <span className="text-sm text-muted-foreground">
-              {formatDate(story.created_at)}
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-medium">{story.title}</h2>
+              {story.is_featured && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500/20 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
+                    >
+                      <Sparkles className="mr-1 h-3 w-3" />
+                      Featured
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>This story is featured by editors</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-xs text-muted-foreground/80 transition-colors hover:text-muted-foreground">
+                    {formatDate(story.created_at)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{new Date(story.created_at).toLocaleString()}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
-          <div className="mt-2">
-            {shouldTruncate && !isExpanded ? (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  {story.content.slice(0, 280)}...
-                </p>
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="mt-1 text-sm text-primary hover:underline"
+          <div className="mt-3">
+            <AnimatePresence mode="wait">
+              {shouldTruncate && !isExpanded ? (
+                <motion.div
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  key="truncated"
                 >
-                  Read more
-                </button>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">{story.content}</p>
-            )}
+                  <p className="text-sm leading-relaxed text-card-foreground">
+                    {story.content.slice(0, 280)}...
+                  </p>
+                  <Button
+                    onClick={() => setIsExpanded(true)}
+                    variant="ghost"
+                    size="sm"
+                    className="mt-1 h-auto p-0 text-sm font-normal text-primary/90 hover:bg-transparent hover:text-primary hover:underline"
+                  >
+                    Read more
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  key="full"
+                >
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-card-foreground">
+                    {story.content}
+                  </p>
+                  {isExpanded && shouldTruncate && (
+                    <Button
+                      onClick={() => setIsExpanded(false)}
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1 h-auto p-0 text-sm font-normal text-primary/90 hover:bg-transparent hover:text-primary hover:underline"
+                    >
+                      Show less
+                    </Button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {story.hashtags && story.hashtags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-1.5">
               {story.hashtags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="h-6 cursor-pointer bg-secondary/50 px-2 py-0 text-xs transition-colors hover:bg-secondary"
+                >
                   #{tag}
                 </Badge>
               ))}
@@ -95,35 +190,47 @@ export function PostCard({ story }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t pt-3">
-        <div className="flex items-center gap-2">
+      <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-4">
+        <div className="flex items-center gap-1">
           <Button
-            variant={isLiked ? "default" : "ghost"}
+            variant={isLiked ? "secondary" : "ghost"}
             size="sm"
             onClick={handleLike}
-            className="transition-colors"
+            className={`rounded-full transition-all duration-200 ${isLiked ? "hover:bg-red-100 dark:hover:bg-red-900/30" : ""}`}
           >
             <Heart
-              className={`mr-1 h-4 w-4 ${isLiked ? "fill-current text-red-500" : ""}`}
+              className={`mr-1 h-4 w-4 transition-all ${
+                isLiked ? "scale-110 fill-red-500 text-red-500" : ""
+              }`}
             />
             {formatCount(likeCount)}
           </Button>
 
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="rounded-full">
             <MessageCircle className="mr-1 h-4 w-4" />
-            {formatCount(story.comments_count)}
+            {formatCount(story.comments_count || 0)}
           </Button>
 
-          {story.is_featured && (
-            <Button variant="ghost" size="sm">
-              <Sparkles className="mr-1 h-4 w-4" />
-              Featured
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" className="rounded-full">
+            <Share2 className="mr-1 h-4 w-4" />
+            Share
+          </Button>
         </div>
 
-        <div className="text-sm text-muted-foreground">Pod #{story.pod_id}</div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge
+              variant="outline"
+              className="h-6 cursor-pointer px-2 py-0 text-xs transition-all hover:bg-muted/50"
+            >
+              Pod #{story.pod_id}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>View all stories in this pod</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
-    </div>
+    </motion.div>
   );
 }

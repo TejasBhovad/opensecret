@@ -632,7 +632,6 @@ export async function removeStoryReaction(story_id, reaction) {
   }
 }
 
-// get suggested pods
 export async function getSuggestedPods(user_id) {
   try {
     const user = await getUserById(user_id);
@@ -640,29 +639,29 @@ export async function getSuggestedPods(user_id) {
       throw new Error("User not found");
     }
 
+    // Get pods that user is already following
     const userPods = await getUserPods(user_id);
     const userPodIds = userPods.map((pod) => pod.pod_id);
 
-    const results = await db
-      .select()
-      .from(pods)
-      .where(
-        and(
-          eq(pods.is_public, true),
-          or(
-            eq(pods.admin_id, user_id),
-            sql`${pods.pod_id} NOT IN (${userPodIds})`,
-          ),
-        ),
-      )
-      .limit(4);
+    let query = db.select().from(pods).where(eq(pods.is_public, true));
+
+    // Only add the NOT IN clause if there are pod IDs to exclude
+    if (userPodIds.length > 0) {
+      query = query.where(not(inArray(pods.pod_id, userPodIds)));
+    }
+
+    // Exclude pods created by the user
+    query = query.where(not(eq(pods.admin_id, user_id)));
+
+    // Add limit and execute
+    const results = await query.limit(4);
+
     return results;
   } catch (error) {
     console.error("Get suggested pods error:", error);
     throw error;
   }
 }
-
 export async function getSuggestedUsers(user_id) {
   try {
     const userFollowing = await db

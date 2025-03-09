@@ -1,305 +1,312 @@
 "use client";
-import { motion } from "motion/react";
-import { useState } from "react";
-import { createPod } from "../../../utils/db/action.js";
-import { sharePod } from "../../../utils/db/action.js";
-// Custom Alert Component
-const Alert = ({ type, message, onClose }) => {
-  const alertStyles = {
-    success: "bg-green-500 border-green-700",
-    error: "bg-red-500 border-red-700",
-    warning: "bg-yellow-500 border-yellow-700",
-  };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -50 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -50 }}
-      className={`fixed right-4 top-4 z-50 flex items-center justify-between rounded-lg p-4 text-white shadow-xl ${alertStyles[type]} transform transition-all duration-300`}
-    >
-      <div className="flex items-center">
-        {type === "success" && (
-          <svg
-            className="mr-2 h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        )}
-        {type === "error" && (
-          <svg
-            className="mr-2 h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        )}
-        <span className="font-bold">{message}</span>
-      </div>
-      <button
-        onClick={onClose}
-        className="ml-4 rounded-full p-1 transition hover:bg-white/20"
-      >
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
-    </motion.div>
-  );
-};
+import { useState } from "react";
+import { motion } from "motion/react";
+import { createPod, sharePod } from "../../../utils/db/action.js";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const CreatePod = () => {
-  // State Management
-  const [description, setDescription] = useState("");
-  const [domain, setDomain] = useState("");
-  const [customDomain, setCustomDomain] = useState("");
-  const [subtag, setSubtag] = useState("");
-  const [customSubtag, setCustomSubtag] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    domain: "",
+    customDomain: "",
+    subtag: "",
+    customSubtag: "",
+    isPublic: true,
+    emails: "",
+  });
+
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [name, setName] = useState("");
-  const [emails, setEmails] = useState("");
-  // Validation Function
-  const validateForm = () => {
-    if (!description.trim()) {
-      showAlert("error", "Describe your pod, Chad!");
-      return false;
-    }
-    if (!domain && !customDomain.trim()) {
-      showAlert("error", "Choose a domain, Legend!");
-      return false;
-    }
-    if (!subtag && !customSubtag.trim()) {
-      showAlert("error", "Pick a subtag, Warrior!");
-      return false;
-    }
-    if (!isPublic) {
-      showAlert("warning", "Private pods are for the weak!");
-    }
-    if (domain === "Other" && !customDomain.trim()) {
-      showAlert("error", "Enter your custom domain, Ninja!");
-      return false;
-    }
-    if (subtag === "Other" && !customSubtag.trim()) {
-      showAlert("error", "Enter your custom vibe, Ninja!");
-      return false;
-    }
-    if (name.length < 3) {
-      showAlert("error", "Name must be at least 3 characters long, Ninja!");
-      return false;
-    }
-    return true;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Alert Handler
+  const selectOption = (field, value) => {
+    setFormData((prev) => {
+      // Reset custom fields when selecting non-custom options
+      if (field === "domain" && value !== "Other") {
+        return { ...prev, domain: value, customDomain: "" };
+      }
+      if (field === "subtag" && value !== "Other") {
+        return { ...prev, subtag: value, customSubtag: "" };
+      }
+      return { ...prev, [field]: value };
+    });
+  };
+
+  const togglePublic = () => {
+    setFormData((prev) => ({ ...prev, isPublic: !prev.isPublic }));
+  };
+
   const showAlert = (type, message) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 3000);
   };
 
-  // Submit Handler
+  const validateForm = () => {
+    const {
+      name,
+      description,
+      domain,
+      customDomain,
+      subtag,
+      customSubtag,
+      isPublic,
+    } = formData;
+
+    if (!description.trim()) {
+      showAlert("error", "Please provide a description");
+      return false;
+    }
+
+    if (name.length < 3) {
+      showAlert("error", "Name must be at least 3 characters");
+      return false;
+    }
+
+    if (!domain && !customDomain.trim()) {
+      showAlert("error", "Please select or enter a domain");
+      return false;
+    }
+
+    if (!subtag && !customSubtag.trim()) {
+      showAlert("error", "Please select or enter a subtag");
+      return false;
+    }
+
+    if (domain === "Other" && !customDomain.trim()) {
+      showAlert("error", "Please enter your custom domain");
+      return false;
+    }
+
+    if (subtag === "Other" && !customSubtag.trim()) {
+      showAlert("error", "Please enter your custom subtag");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+
     try {
+      const {
+        name,
+        description,
+        domain,
+        customDomain,
+        subtag,
+        customSubtag,
+        isPublic,
+        emails,
+      } = formData;
+
       const newPod = await createPod({
         admin_id: 3,
         is_public: isPublic,
         subtag: subtag === "Other" ? customSubtag : subtag,
         domain: domain === "Other" ? customDomain : domain,
         description,
-        name: name,
-      });
-      const share = await sharePod({
-        pod_id: newPod.pod_id,
-        emails: emails,
+        name,
       });
 
-      showAlert("success", "Pod Created like a BOSS! 💪");
+      if (!isPublic && emails.trim()) {
+        await sharePod({
+          pod_id: newPod.pod_id,
+          emails,
+        });
+      }
+
+      showAlert("success", "Pod created successfully");
 
       // Reset form
-      setDescription("");
-      setDomain("");
-      setCustomDomain("");
-      setSubtag("");
-      setCustomSubtag("");
-      setIsPublic(true);
-      setName("");
+      setFormData({
+        name: "",
+        description: "",
+        domain: "",
+        customDomain: "",
+        subtag: "",
+        customSubtag: "",
+        isPublic: true,
+        emails: "",
+      });
     } catch (error) {
-      showAlert("error", "Pod Creation Failed. Try Again, Warrior!");
+      showAlert("error", "Failed to create pod");
       console.error("Pod Creation Error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Domain and Subtag options
+  const domainOptions = ["Tech", "Anime", "Music", "Other"];
+  const subtagOptions = ["Happy", "Sad", "Fun", "Other"];
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      {/* Alert Render */}
-      {alert && (
-        <Alert
-          type={alert.type}
-          message={alert.message}
-          onClose={() => setAlert(null)}
-        />
-      )}
-
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-md rounded-xl bg-secondary p-8 shadow-2xl"
-      >
-        <h1 className="mb-6 text-center text-2xl font-bold text-foreground">
-          Create Your Epic Pod 🚀
-        </h1>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Description Input */}
-          <textarea
-            placeholder="Describe your pod's vibe..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-lg bg-foreground/10 p-3 text-foreground transition focus:ring-2 focus:ring-blue-500"
-            rows={3}
-          />
-          {/* Name Input */}
-          <input
-            type="text"
-            placeholder="Enter your pod name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-2 w-full rounded-lg bg-foreground/10 p-3 text-foreground transition focus:ring-2 focus:ring-blue-500"
-          />
-
-          {/* Domain Selection */}
-          <div>
-            <p className="mb-2 text-foreground">Choose Your Domain</p>
-            <div className="grid grid-cols-4 gap-2">
-              {["Tech", "Anime", "Music", "Other"].map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setDomain(item);
-                    if (item !== "Other") setCustomDomain(""); // Reset custom domain if not "Other"
-                  }}
-                  className={`rounded-lg py-2 transition ${
-                    domain === item
-                      ? "bg-foreground text-background"
-                      : "bg-foreground/10 text-foreground hover:bg-foreground/20"
-                  } `}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-            {domain === "Other" && (
-              <input
-                type="text"
-                placeholder="Enter your custom domain"
-                value={customDomain}
-                onChange={(e) => setCustomDomain(e.target.value)}
-                className="mt-2 w-full rounded-lg bg-foreground/10 p-3 text-foreground transition focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-          </div>
-
-          {/* Subtag Selection */}
-          <div>
-            <p className="mb-2 text-foreground">Pick Your Vibe</p>
-            <div className="grid grid-cols-4 gap-2">
-              {["Happy", "Sad", "Fun", "Other"].map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setSubtag(item);
-                    if (item !== "Other") setCustomSubtag(""); // Reset custom subtag if not "Other"
-                  }}
-                  className={`rounded-lg py-2 transition ${
-                    subtag === item
-                      ? "bg-foreground text-background"
-                      : "bg-foreground/10 text-foreground hover:bg-foreground/20"
-                  } `}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-            {subtag === "Other" && (
-              <input
-                type="text"
-                placeholder="Enter your custom vibe"
-                value={customSubtag}
-                onChange={(e) => setCustomSubtag(e.target.value)}
-                className="mt-2 w-full rounded-lg bg-foreground/10 p-3 text-foreground transition focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-          </div>
-
-          {/* Public Toggle */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={() => setIsPublic(!isPublic)}
-              className="mr-2 text-foreground focus:ring-foreground"
-            />
-            <span className="text-foreground"> Public</span>
-          </div>
-          {!isPublic && (
-            <input
-              type="text"
-              placeholder="Enter emails to share your pod with..."
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              className="mt-2 w-full rounded-lg bg-foreground/10 p-3 text-foreground transition focus:ring-2 focus:ring-blue-500"
-            />
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full rounded-lg py-2 transition ${
-              isSubmitting
-                ? "cursor-not-allowed bg-background"
-                : "bg-foreground text-background hover:bg-foreground/90"
-            }`}
+      <div className="w-full max-w-md">
+        {alert && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-4"
           >
-            {isSubmitting ? "Creating..." : "Create Pod"}
-          </button>
-        </form>
-      </motion.div>
+            <Alert
+              variant={alert.type === "success" ? "default" : "destructive"}
+            >
+              <AlertTitle>
+                {alert.type === "success" ? "Success" : "Error"}
+              </AlertTitle>
+              <AlertDescription>{alert.message}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
+        <Card>
+          <CardHeader>
+            <h2 className="text-center text-xl font-semibold">Create Pod</h2>
+          </CardHeader>
+
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Pod Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="Enter pod name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Describe your pod..."
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Domain</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {domainOptions.map((option) => (
+                    <Button
+                      key={option}
+                      type="button"
+                      variant={
+                        formData.domain === option ? "default" : "outline"
+                      }
+                      onClick={() => selectOption("domain", option)}
+                      className="h-9"
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+
+                {formData.domain === "Other" && (
+                  <Input
+                    name="customDomain"
+                    placeholder="Enter custom domain"
+                    value={formData.customDomain}
+                    onChange={handleChange}
+                    className="mt-2"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Subtag</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {subtagOptions.map((option) => (
+                    <Button
+                      key={option}
+                      type="button"
+                      variant={
+                        formData.subtag === option ? "default" : "outline"
+                      }
+                      onClick={() => selectOption("subtag", option)}
+                      className="h-9"
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+
+                {formData.subtag === "Other" && (
+                  <Input
+                    name="customSubtag"
+                    placeholder="Enter custom subtag"
+                    value={formData.customSubtag}
+                    onChange={handleChange}
+                    className="mt-2"
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isPublic"
+                  checked={formData.isPublic}
+                  onCheckedChange={togglePublic}
+                />
+                <Label htmlFor="isPublic">Public pod</Label>
+              </div>
+
+              {!formData.isPublic && (
+                <div className="space-y-2">
+                  <Label htmlFor="emails">Share with (emails)</Label>
+                  <Input
+                    id="emails"
+                    name="emails"
+                    placeholder="comma-separated emails"
+                    value={formData.emails}
+                    onChange={handleChange}
+                  />
+                </div>
+              )}
+            </form>
+          </CardContent>
+
+          <CardFooter>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? "Creating..." : "Create Pod"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };
